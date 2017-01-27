@@ -60,10 +60,10 @@ function Switch(switchValues){
 
 // needed due to a quirk with PythonShell
 function onString(number){
-  return './public/python/scripts/sw' + number + '_on.py'
+  return './public/python/sw' + number + '_on.py'
 }
 function offString(number){
-  return './public/python/scripts/sw' + number + '_off.py'
+  return './public/python/sw' + number + '_off.py'
 }
 
 
@@ -105,7 +105,7 @@ app.get('/api/switches/:id', function(req, res){
 })
 
 app.post('/api/switches/:id', function(req, res){
-  
+
 // For now, uses a simple password query in the url string. 
 // Example: POST to localhost:8000/API/switches/sw1?password=test
   if (req.query.password === process.env.PASS){
