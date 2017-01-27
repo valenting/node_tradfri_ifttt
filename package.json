@@ -1,0 +1,27 @@
+{
+  "name": "google_home_controller",
+  "version": "1.0.0",
+  "description": "Backend to control electronics from IFTTT",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/krpeacock/google_home_starter.git"
+  },
+  "keywords": [
+    "google",
+    "home",
+    "raspberry",
+    "pi",
+    "diy",
+    "node.js"
+  ],
+  "author": "Kyle Peacock",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/krpeacock/google_home_starter/issues"
+  },
+  "homepage": "https://github.com/krpeacock/google_home_starter#readme"
+}
