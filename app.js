@@ -1,142 +1,132 @@
 require('dotenv').config();
 
-const PythonShell = require('python-shell');
 const fs = require('fs');
 const express = require('express');
 const bodyParser= require('body-parser');
 const path = require('path')
 const app = express();
 
+const tradfriLib = require("node-tradfri-client");
+const nodeCleanup = require('node-cleanup');
+const RGBColor = require('rgbcolor');
 
-
-// Switch states held in memory
-const switches = [];
-
-// Read state from saveState.json, populate switches array
-var readableStream = fs.createReadStream('saveState.json');
-var data = ''
-
-readableStream.on('data', function(chunk) {
-    data+=chunk;
+nodeCleanup(function (exitCode, signal) {
+  console.log("Cleaning up...");
+  if (tradfri) {
+    console.log("Destroying tradfri connection");
+    tradfri.destroy();
+  }
+  tradfri = undefined;
 });
 
-readableStream.on('end', function() {
-  var parsed = JSON.parse(data);
+const TradfriClient = tradfriLib.TradfriClient;
+var tradfri = new TradfriClient(process.env.HUBIP);
 
-  for (i=0;i<parsed.switches.length;i++){
-    switches.push(new Switch(parsed.switches[i]))
+app.post('/api/:command/:id/:state', function(req, res) {
+  if (req.query.password != process.env.PASS) {
+    console.log("invalid password");
+    res.status(403).send("wrong password");
+    return;
   }
+
+  var command = req.params.command;
+  if (command == "turn" ||
+      command == "dim" ||
+      command == "temp" ||
+      command == "color") {
+    executeCommand(req.params.id, command, req.params.state);
+    res.send("done");
+    return;
+  }
+
+  console.log("unknown command", command);
+  res.status(404).send("wrong command");
 });
 
+function performOperation(bulb, command, state)
+{
+  console.log(command, bulb.name, "(" + bulb.instanceId + ")", state);
+  if (command == "turn") {
+    tradfri.operateLight(bulb, {onOff: state == "on"});
+  } else if (command == "dim") {
+    tradfri.operateLight(bulb, {dimmer: state});
+  } else if (command == "temp") {
+    tradfri.operateLight(bulb, {colorTemperature: state});
+  } else if (command == "color") {
+    // Fixup color names into rgb value strings if necessary
+    var color = new RGBColor(state);
+    state = color.toHex().slice(1);
+    tradfri.operateLight(bulb, {color: state});
+  }
+}
 
+function executeCommand(id, command, state) {
+  // When the id gets passed as "the living room" turn it into "living room"
+  // Also "all the" gets turned into all.
+  id = id.replace(/the/g, "").trim().toLowerCase();
 
+  // If it's just "all" then we set it to the empty string, so we fall back
+  // to setting every bulb (because every bulb name starts with empty string)
+  if (id == "all") {
+    id = "";
+  }
 
-// Switch Model
-// Expects an object:{
-  // id:"sw" + number,
-  // state: "on" or "off",
-  // name: any name you want to display. Defaults to "switch"
-// }
+  console.log("executeCommand", command, id, state);
 
-function Switch(switchValues){
-  this.id = switchValues.id || "sw"
-  this.state = switchValues.state || "off"
-  this.name = switchValues.name || "switch"
-  this.toggle = function(){
-    if(this.state === "on"){
-      this.setState("off")
-    } 
-    else{
-      this.setState("on");
+  for (var groupId in groups) {
+    var group = groups[groupId];
+    if (group.name.toLowerCase() == id) {
+      tradfri.operateGroup(group, {onOff: state == "on"});
+      for (var deviceId of group.deviceIDs) {
+        var bulb = lightbulbs[deviceId];
+        if (bulb) { // skip non-bulbs
+          performOperation(bulb, command, state);
+        }
+      }
+      return;
     }
   }
-  this.setState = function(state){
-    var str = state === "on" ? onString(this.id[2]) : offString(this.id[2]);
-    PythonShell.run(str, function (err) {
-      if (!process.env.DEV){
-        if (err) throw err;
-      } 
-    });
-    this.state = state
-  }
-  // Invokes setState on init to set the switch to its last recalled state.
-  this.setState(this.state);
-}    
 
-// needed due to a quirk with PythonShell
-function onString(number){
-  return './public/python/sw' + number + '_on.py'
-}
-function offString(number){
-  return './public/python/sw' + number + '_off.py'
-}
-
-
-
-
-// Switch Lookup
-function getSwitch(string){
-  return switches.filter(function(element){
-    return element.id === string;
-  })[0]
-}
-
-// Updates saveState.json
-function saveState (){
-  var formattedState = {
-    switches: switches
-  }
-  fs.writeFile('./saveState.json', JSON.stringify(formattedState) )
-}
-
-
-//Server Configuration
-app.use(bodyParser.urlencoded({ extended: true }))
-app.use(express.static(__dirname + '/public'));
-
-// If you have a frontend, drop it in the Public folder with an entry point of index.html
-app.get('/', function(req, res){
-  res.sendFile('index');
-})
-
-// Switch Routes for API
-app.get('/api/switches', function(req, res){
-  res.send(switches);
-})
-
-app.get('/api/switches/:id', function(req, res){
-  var found = getSwitch(req.params.id);
-  res.json(found);
-})
-
-app.post('/api/switches/:id', function(req, res){
-
-// For now, uses a simple password query in the url string. 
-// Example: POST to localhost:8000/API/switches/sw1?password=test
-  if (req.query.password === process.env.PASS){
-    var foundSwitch = getSwitch(req.params.id);
-    
-    // Optional On / Off command. If not included, defaults to a toggle.
-
-    if(!(req.query.command === "on" || req.query.command === "off")){
-      foundSwitch.toggle();
+  for (var bulbid in lightbulbs) {
+    var bulb = lightbulbs[bulbid];
+    if (bulb.name.toLowerCase().startsWith(id)) {
+      performOperation(bulb, command, state);
+      // we don't return, so we can apply to all bulbs that share a naming convention
     }
-    else {
-      foundSwitch.setState(req.query.command)
+  }
+}
+
+const lightbulbs = {};
+function tradfri_deviceUpdated(device) {
+    console.log("tradfri_deviceUpdated", device.instanceId, device.name)
+    if (device.type === tradfriLib.AccessoryTypes.lightbulb) {
+        // remember it
+        lightbulbs[device.instanceId] = device;
     }
+}
 
-    saveState();
-    console.log("postSwitch "+JSON.stringify(foundSwitch));
-    res.json(foundSwitch);
+function tradfri_deviceRemoved(instanceId) {
+  if (instanceId in lightbulbs) {
+    console.log("tradfri_deviceRemoved", instanceId, lightbulbs[instanceId].name)
+    delete lightbulbs[instanceId];
   }
-  else {
-    console.log("invalid password")
-    res.send("try again")
-  }
-  
-})
+}
 
-app.listen(process.env.PORT, function(){
+const groups = {};
+function tradfri_groupUpdated(group) {
+    // remember it
+    console.log("tradfri_groupUpdated", group.instanceId, group.name)
+    groups[group.instanceId] = group;
+}
+
+app.listen(process.env.PORT, function() {
  console.log('Listening on port ' + process.env.PORT);
-})
-
+ tradfri.connect(process.env.APIUSER, process.env.APIKEY)
+        .then(() => {
+          tradfri.on("device updated", tradfri_deviceUpdated)
+                 .on("device removed", tradfri_deviceRemoved)
+                 .observeDevices();
+          tradfri.on("group updated", tradfri_groupUpdated)
+                 .observeGroupsAndScenes();
+        });
+});

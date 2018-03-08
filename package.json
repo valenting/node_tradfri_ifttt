@@ -1,36 +1,41 @@
 {
-  "name": "google_home_controller",
+  "name": "tradfri_ifttt",
   "version": "1.0.0",
-  "description": "Backend to control electronics from IFTTT",
+  "description": "Backend to control IKEA TRADFRI from IFTTT",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js"
+    "start": "node app.js",
+    "key": "node get_key.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/krpeacock/google_home_starter.git"
+    "url": "git+https://github.com/valenting/node_tradfri_ifttt.git"
   },
   "keywords": [
-    "google",
-    "home",
     "raspberry",
     "pi",
     "diy",
-    "node.js"
+    "node.js",
+    "ifttt",
+    "ikea",
+    "tradfri",
+    "google home",
+    "google assistant"
   ],
-  "author": "Kyle Peacock",
+  "author": "Valentin Goșu",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/krpeacock/google_home_starter/issues"
+    "url": "https://github.com/valenting/node_tradfri_ifttt/issues"
   },
-  "homepage": "https://github.com/krpeacock/google_home_starter#readme",
+  "homepage": "https://github.com/valenting/node_tradfri_ifttt#readme",
   "dependencies": {
     "body-parser": "^1.16.0",
     "dotenv": "^4.0.0",
     "express": "^4.14.0",
     "fs": "0.0.1-security",
-    "path": "^0.12.7",
-    "python-shell": "^0.4.0"
+    "node-cleanup": "^2.1.2",
+    "node-tradfri-client": "^0.8.6",
+    "path": "^0.12.7"
   },
   "devDependencies": {
     "locus": "^1.2.0"
