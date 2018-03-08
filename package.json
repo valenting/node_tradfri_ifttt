@@ -4,8 +4,7 @@
   "description": "Backend to control IKEA TRADFRI from IFTTT",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js",
-    "key": "node get_key.js"
+    "start": "node app.js"
   },
   "repository": {
     "type": "git",
