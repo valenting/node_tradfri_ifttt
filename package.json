@@ -34,7 +34,8 @@
     "fs": "0.0.1-security",
     "node-cleanup": "^2.1.2",
     "node-tradfri-client": "^0.8.6",
-    "path": "^0.12.7"
+    "path": "^0.12.7",
+    "rgbcolor": "^1.0.1"
   },
   "devDependencies": {
     "locus": "^1.2.0"
