@@ -2,6 +2,14 @@
 
 This project is based on [google_home_starter](https://github.com/krpeacock/google_home_starter) by Kyle Peacock.
 
+Using this project you can controll your IKEA lights using the Google Home/Assistant. The names of the lightbulbs and groups should be set up in the IKEA app. As there is no way to make subgroups, you can hack around it by naming lighbulbs in a similar fashion. For example:
+   * Have a group called `Living Room`.
+   * Name your lightbulbs `Couch 1`, `Couch 2`, `Lamp 1`.
+   * You can then tell the assistant to `turn all the living room lights`.
+   * Or `turn on the couch lights` which is a subgroup of the living room lights.
+   * The command will try to match the group name exactly.
+   * If no match is found, it will apply the action to all bulbs that start with the given argument.
+
 ### Getting Started
 If you haven't already, install git and node.js on your device.
 
@@ -38,3 +46,6 @@ If you haven't already, install git and node.js on your device.
       - `Set the $ lights to #` => `http://[IPADDRESS]:[PORT]/api/dim/{{TextField}}/{{NumberField}}?password=[PASS]`
       - `Set the light color to $` => `http://[IPADDRESS]:[PORT]/api/color/all/{{TextField}}?password=[PASS]`
       - `Set the $ light temperature to #` => `http://[IPADDRESS]:[PORT]/api/temp/{{TextField}}/{{NumberField}}?password=[PASS]`
+
+8. Run the project at startup:
+   * Add a line similar to `cd /home/pi/node_tradfri_ifttt && nohup npm start &` to your `/etc/rc.local`
