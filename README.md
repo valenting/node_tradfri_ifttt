@@ -22,7 +22,7 @@ If you haven't already, install git and node.js on your device.
     * You will get back the identity and psk values to be saved into the .env file
 5. In .env, configure your environment as follows:
     * `DEV=`  `TRUE` if you are on desktop, or `FALSE` if you are on your raspberry pi
-    * `PORT=` `8000` for development, `80` or `443` for HTTP or HTTPS
+    * `PORT=` The port that the server will listen on.
     * `PASS=` Whatever you want the password to your API to be
     * `HUBIP=` The IP to your IKEA Tradfri hub
     * `APIUSER=` The user/identity used to the connect to the hub
